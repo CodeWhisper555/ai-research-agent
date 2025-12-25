@@ -1,64 +1,101 @@
 import os
+import time
+import threading
+import random
 from crewai import Agent, Task, Crew, LLM
 from crewai_tools import SerperDevTool
 
-# 1. Initialize Gemini 3 Flash
-gemini_3_flash = LLM(
+# 1. Faster Gemini 3 Config
+fast_gemini = LLM(
     model="gemini/gemini-3-flash-preview",
-    temperature=1.0,
-    api_key=os.environ.get("GEMINI_API_KEY"),
-    extra_body={"reasoning_effort": "high"}
+    temperature=0.7,
+    extra_body={"reasoning_effort": "minimal"} 
 )
 
-# 2. Initialize Search Tool (Requires SERPER_API_KEY in .env)
-search_tool = SerperDevTool()
+search_tool = SerperDevTool(n_results=3)
 
-# 3. Define Agents
+# 2. Optimized Agents
 researcher = Agent(
-    role='Expert Web Researcher',
-    goal='Find the most relevant and up-to-date information about {topic}',
-    backstory='You are a master at navigating the web and extracting precise data.',
-    llm=gemini_3_flash,
-    tools=[search_tool], # Give the agent search powers
-    verbose=True
+    role='Fast Web Researcher',
+    goal='Quickly find 5 key facts about {topic}',
+    backstory='You are a speed-optimized data hunter.',
+    llm=fast_gemini,
+    tools=[search_tool],
+    max_iter=3,
+    max_execution_time=60,
+    verbose=False # Set to False so it doesn't interrupt our mini-game
 )
 
 writer = Agent(
-    role='Content Specialist',
-    goal='Write a compelling report about {topic}',
-    backstory='You transform raw research into beautiful, readable summaries.',
-    llm=gemini_3_flash,
-    verbose=True
+    role='Concise Writer',
+    goal='Summarize findings about {topic} immediately',
+    backstory='You value time. You deliver sharp, no-fluff summaries.',
+    llm=fast_gemini,
+    verbose=False
 )
 
-# 4. Define Tasks with Placeholders
+# 3. Tasks
 research_task = Task(
-    description='Search the internet and find the 5 most important facts about {topic}.',
-    expected_output='A bulleted list of 5 key findings with sources.',
+    description='Search and find 5 important facts about {topic}.',
+    expected_output='5 bullet points with sources.',
     agent=researcher
 )
 
 write_task = Task(
-    description='Using the research provided, write a 2-paragraph summary about {topic}.',
-    expected_output='A clean, formatted 2-paragraph summary.',
+    description='Summarize the research on {topic} in 2 short paragraphs.',
+    expected_output='A brief summary.',
     agent=writer
 )
 
-# 5. Assemble the Crew
-crew = Crew(
-    agents=[researcher, writer],
-    tasks=[research_task, write_task],
-    verbose=True
-)
+# --- PASS TIME LOGIC ---
+stop_game = False
 
-# 6. Get User Input and Kickoff
+def play_mini_game():
+    """A simple game to play while waiting for the AI."""
+    print("\n[ Wait-Time Mini-Game] I'm thinking of a number between 1 and 100...")
+    target = random.randint(1, 100)
+    attempts = 0
+    
+    while not stop_game:
+        try:
+            # Using a short timeout-like check to see if we should stop
+            guess = input("\n(Game) Guess the number (or wait for AI): ")
+            if stop_game: break
+            
+            attempts += 1
+            guess = int(guess)
+            if guess < target: print("Higher! ↑")
+            elif guess > target: print("Lower! ↓")
+            else:
+                print(f" YOU GOT IT in {attempts} tries! Generating a new number...")
+                target = random.randint(1, 100)
+                attempts = 0
+        except ValueError:
+            if not stop_game: print("Enter a valid number!")
+
+# --- MAIN EXECUTION ---
 if __name__ == "__main__":
-    user_query = input("What topic would you like to research? ")
+    print("""
+     WELCOME TO THE AI INSIGHT GENERATOR 
+    -----------------------------------------
+    "The world's knowledge, refined by Gemini 3."
+    """)
     
-    # Pass the user input as a dictionary to the kickoff method
+    user_query = input(" What mystery shall we uncover today? (Topic): ")
+    
+    print(f"\n Launching agents to research: '{user_query}'...")
+    print("This usually takes 30-60 seconds. In the meantime...")
+
+    # Start the game thread
+    game_thread = threading.Thread(target=play_mini_game, daemon=True)
+    game_thread.start()
+
+    # Start the Crew
+    crew = Crew(agents=[researcher, writer], tasks=[research_task, write_task])
     result = crew.kickoff(inputs={'topic': user_query})
-    
-    print("\n\n########################")
-    print("## FINAL REPORT")
-    print("########################\n")
+
+    # Stop the game
+    stop_game = True
+    print("\n\n AI Agents have returned from their journey!")
+    print("-----------------------------------------")
     print(result)
