@@ -16,7 +16,6 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # 🔑 SECRETS SYNCHRONIZATION
-# CrewAI uses LiteLLM, which sometimes looks specifically for 'GEMINI_API_KEY'
 if "GOOGLE_API_KEY" in st.secrets:
     os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
     os.environ["GEMINI_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
@@ -26,10 +25,11 @@ if "SERPER_API_KEY" in st.secrets:
 # --- THE SPECTRAL TOME ENGINE ---
 @st.cache_resource
 def initialize_spectre_llm():
-    # Using the highly stable 2.0-flash build for agentic reliability
+    # Switching to 1.5-Flash to bypass the '0 limit' quota bug in 2.0 Free Tier
     return LLM(
-        model="gemini/gemini-2.0-flash", 
-        temperature=0.7
+        model="gemini/gemini-1.5-flash", 
+        temperature=0.7,
+        max_retries=3 # Automatically waits and retries if rate limited
     )
 
 # --- WEB UI ---
@@ -41,36 +41,36 @@ st.info("Operative AJAY: System online. Prepared for recon.")
 user_query = st.text_input("🕵️ Enter Your Topic For Deep Intel:", placeholder="Leave blank for core intel...")
 
 if st.button("EXECUTE PROTOCOL"):
-    # Fallback logic for Ajay's "Invisible" input
     target_topic = user_query if user_query else "Most Important functions of AI Agents"
     
     if not os.environ.get("GOOGLE_API_KEY") or not os.environ.get("SERPER_API_KEY"):
-        st.error("🚨 ACCESS DENIED: API Keys missing in Secrets. Please check 'Manage App' settings.")
+        st.error("🚨 ACCESS DENIED: API Keys missing in Secrets.")
         st.stop()
 
     with st.status("📡 Accessing Spectral Tome...", expanded=True) as status:
         try:
-            st.write("Initializing Stable Gemini Architecture...")
+            st.write("Initializing Ultra-Stable Gemini 1.5 Architecture...")
             llm = initialize_spectre_llm()
             search_tool = SerperDevTool()
 
             st.write(f"Deploying Field Operative A to investigate '{target_topic}'...")
             
-            # 1. Agents
+            # 1. Agents - Optimized with smaller backstories to save tokens
             researcher = Agent(
                 role='Spectre Field Operative',
-                goal=f'Unlock hidden truths about {target_topic}',
-                backstory='Code Name: AJAY. Elite ghost operative scouting the deep web.',
+                goal=f'Extract 3 critical truths about {target_topic}',
+                backstory='Code Name: AJAY. Elite scout.',
                 llm=llm,
                 tools=[search_tool],
                 verbose=True,
-                allow_delegation=False
+                allow_delegation=False,
+                max_iter=3 # Prevents infinite loops from eating quota
             )
 
             writer = Agent(
                 role='Spectre Lead Analyst',
-                goal=f'Summarize findings into a high-level briefing on {target_topic}',
-                backstory='The strategist. You turn chaos into invincible intelligence.',
+                goal='Synthesize findings into a high-level briefing.',
+                backstory='The strategist. Turns raw data into intelligence.',
                 llm=llm,
                 verbose=True,
                 allow_delegation=False
@@ -78,8 +78,8 @@ if st.button("EXECUTE PROTOCOL"):
 
             # 2. Tasks
             tasks = [
-                Task(description=f'Scout 5 critical facts about {target_topic}.', expected_output='5 bullet points.', agent=researcher),
-                Task(description=f'Synthesize {target_topic} findings.', expected_output='2 polished paragraphs.', agent=writer)
+                Task(description=f'Find 3 critical facts about {target_topic}.', expected_output='3 bullet points.', agent=researcher),
+                Task(description=f'Summarize {target_topic} findings.', expected_output='1 polished paragraph.', agent=writer)
             ]
 
             # 3. Execution
@@ -103,8 +103,11 @@ if st.button("EXECUTE PROTOCOL"):
             
         except Exception as e:
             status.update(label="🚨 MISSION FAILED", state="error")
-            st.error(f"Critical System Failure: {str(e)}")
-            st.info("Tip: If you see '400', check your model name or API Key permissions in AI Studio.")
+            if "429" in str(e):
+                st.error("QUOTA EXHAUSTED: The Free Tier is currently full. Wait 60s and try again.")
+                
+            else:
+                st.error(f"Critical System Failure: {str(e)}")
 
 st.write("---")
-st.caption("v3.1 | Powered by Gemini 2.0 Flash | Stable Deployment Mode")
+st.caption("v3.2 | Powered by Gemini 1.5 Flash | High-Stability Mode")
