@@ -1,72 +1,59 @@
 import os
 from crewai import Agent, Task, Crew, Process, LLM
-from crewai_tools import SerperDevTool
 
-# 1. Environment Setup
-os.environ["OPENAI_API_KEY"] = "NA" 
-os.environ["SERPER_API_KEY"] = os.getenv("SERPER_API_KEY")
-
-# 2. Define LLM with a Pinned Version
-# Using 'gemini/gemini-1.5-flash-001' is the most stable path for the v1beta API
+# 1. Configuration - Use the model string you confirmed in AI Studio
+# As of late 2025, 'gemini-3-flash-preview' is the stable string for this tier.
 gemini_llm = LLM(
-    model="gemini/gemini-1.5-flash-001",
+    model="gemini/gemini-3-flash-preview",
     api_key=os.getenv("GEMINI_API_KEY"),
-    temperature=0.7
-)
-
-# 3. Setup Tools
-search_tool = SerperDevTool()
-
-# 4. Define Agents
-researcher = Agent(
-    role='Market Researcher',
-    goal='Find 3 major AI agent trends for 2025',
-    backstory='You are an expert at technical trend analysis.',
-    tools=[search_tool],
-    llm=gemini_llm,
-    verbose=True,
-    allow_delegation=False
-)
-
-writer = Agent(
-    role='Technical Writer',
-    goal='Summarize the research into a short report',
-    backstory='You translate complex data into readable summaries.',
-    llm=gemini_llm,
-    verbose=True,
-    allow_delegation=False
-)
-
-# 5. Define Tasks
-research_task = Task(
-    description='Analyze the current state of {topic} for 2025.',
-    expected_output='A bulleted list of 3 key insights.',
-    agent=researcher
-)
-
-writing_task = Task(
-    description='Write a 2-paragraph summary based on the research.',
-    expected_output='A professional markdown report.',
-    agent=writer
-)
-
-# 6. Assemble the Crew
-research_crew = Crew(
-    agents=[researcher, writer],
-    tasks=[research_task, writing_task],
-    process=Process.sequential,
-    planning=False, 
+    temperature=1.0,  # Gemini 3 performs best at 1.0
     verbose=True
 )
 
-if __name__ == "__main__":
-    print("🚀 Starting the Gemini Research Crew...")
-    try:
-        # We use kickoff() to start the process
-        result = research_crew.kickoff(inputs={'topic': 'AI Agentic Workflows'})
-        print("\n\n########################")
-        print("## FINAL OUTPUT ##")
-        print("########################\n")
-        print(result)
-    except Exception as e:
-        print(f"\n❌ An error occurred: {e}")
+# 2. Define Agents
+researcher = Agent(
+    role='Market Researcher',
+    goal='Identify emerging trends in the AI industry for 2026',
+    backstory='You are an expert analyst with a knack for spotting "the next big thing."',
+    llm=gemini_llm,
+    allow_delegation=False,
+    verbose=True
+)
+
+writer = Agent(
+    role='Content Strategist',
+    goal='Write a compelling blog post about AI trends',
+    backstory='You transform complex data into engaging narratives for a tech audience.',
+    llm=gemini_llm,
+    verbose=True
+)
+
+# 3. Define Tasks
+task1 = Task(
+    description='Analyze the top 3 AI trends based on recent late-2025 breakthroughs.',
+    expected_output='A bulleted list of 3 trends with a brief explanation for each.',
+    agent=researcher
+)
+
+task2 = Task(
+    description='Use the research to write a 3-paragraph blog post summary.',
+    expected_output='A markdown-formatted blog post.',
+    agent=writer
+)
+
+# 4. Form the Crew
+crew = Crew(
+    agents=[researcher, writer],
+    tasks=[task1, task2],
+    process=Process.sequential,
+    verbose=True
+)
+
+# 5. Kickoff
+print("### Starting the Crew Workflow ###")
+result = crew.kickoff()
+
+print("\n\n########################")
+print("## FINAL OUTPUT ##")
+print("########################\n")
+print(result)
