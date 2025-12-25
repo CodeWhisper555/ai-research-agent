@@ -78,7 +78,7 @@ if __name__ == "__main__":
         print("     SECURE CONNECTION: Spectral Tome of Knowledge   ")
         print("━" * 50)
         
-        user_query = input("\n🕵️ Identify the target for deep recon: ")
+        user_query = input("\n🕵️ Enter your topic for Deep Research : ")
         if not user_query: user_query = "Rise of AI Agents"
         
         print(f"\n📡 Deploying agents to investigate: '{user_query}'")
