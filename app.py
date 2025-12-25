@@ -3,14 +3,14 @@ from crewai import Agent, Task, Crew, Process, LLM
 from crewai_tools import SerperDevTool
 
 # 1. Environment Setup
-# We set a dummy key to bypass the 'ImportError' check. 
-# Your agents will NOT use this; they will use the LLM object below.
+# We set a dummy key to bypass CrewAI's internal OpenAI check.
 os.environ["OPENAI_API_KEY"] = "NA" 
 os.environ["SERPER_API_KEY"] = os.getenv("SERPER_API_KEY")
 
 # 2. Define Gemini 1.5 Flash
+# Changed to 'gemini-1.5-flash-latest' to resolve the 404 API error
 gemini_llm = LLM(
-    model="gemini/gemini-1.5-flash",
+    model="gemini/gemini-1.5-flash-latest",
     api_key=os.getenv("GEMINI_API_KEY"),
     temperature=0.7
 )
@@ -52,7 +52,7 @@ writing_task = Task(
 )
 
 # 6. Assemble the Crew
-# IMPORTANT: planning=False is mandatory here to avoid the OpenAI error.
+# planning=False is used to prevent the background OpenAI planner from triggering
 research_crew = Crew(
     agents=[researcher, writer],
     tasks=[research_task, writing_task],
@@ -63,6 +63,9 @@ research_crew = Crew(
 
 if __name__ == "__main__":
     print("🚀 Starting the Gemini Research Crew...")
-    result = research_crew.kickoff(inputs={'topic': 'AI Agentic Workflows'})
-    print("\n\n########################")
-    print(result)
+    try:
+        result = research_crew.kickoff(inputs={'topic': 'AI Agentic Workflows'})
+        print("\n\n########################")
+        print(result)
+    except Exception as e:
+        print(f"\n❌ An error occurred: {e}")
