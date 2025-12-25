@@ -6,96 +6,75 @@ from crewai import Agent, Task, Crew, LLM
 from crewai_tools import SerperDevTool
 
 # 1. Faster Gemini 3 Config
+# Note: 'minimal' thinking is perfect for fast search/summarization
 fast_gemini = LLM(
     model="gemini/gemini-3-flash-preview",
-    temperature=0.7,
-    extra_body={"reasoning_effort": "minimal"} 
+    temperature=1.0, # Recommended for Gemini 3
+    extra_body={"thinking_level": "minimal"} 
 )
 
 search_tool = SerperDevTool(n_results=3)
 
-# 2. Optimized Agents
+# 2. Optimized Agents (verbose=False to keep terminal clean for the game)
 researcher = Agent(
-    role='Fast Web Researcher',
-    goal='Quickly find 5 key facts about {topic}',
-    backstory='You are a speed-optimized data hunter.',
+    role='Speed-Data Hunter',
+    goal='Scour the digital realm for 5 vital facts on {topic}',
+    backstory='You live in the wires. You find truth at the speed of light.',
     llm=fast_gemini,
     tools=[search_tool],
     max_iter=3,
-    max_execution_time=60,
-    verbose=False # Set to False so it doesn't interrupt our mini-game
+    verbose=False
 )
 
 writer = Agent(
-    role='Concise Writer',
-    goal='Summarize findings about {topic} immediately',
-    backstory='You value time. You deliver sharp, no-fluff summaries.',
+    role='The Insight Weaver',
+    goal='Distill research into a sharp 2-paragraph summary on {topic}',
+    backstory='You turn raw data into narrative gold.',
     llm=fast_gemini,
     verbose=False
 )
 
 # 3. Tasks
-research_task = Task(
-    description='Search and find 5 important facts about {topic}.',
-    expected_output='5 bullet points with sources.',
-    agent=researcher
-)
+research_task = Task(description='Find 5 facts about {topic}.', expected_output='5 bullets.', agent=researcher)
+write_task = Task(description='Summarize {topic} briefly.', expected_output='2 paragraphs.', agent=writer)
 
-write_task = Task(
-    description='Summarize the research on {topic} in 2 short paragraphs.',
-    expected_output='A brief summary.',
-    agent=writer
-)
+# --- CREATIVE WAIT LOGIC ---
+stop_event = threading.Event()
 
-# --- PASS TIME LOGIC ---
-stop_game = False
-
-def play_mini_game():
-    """A simple game to play while waiting for the AI."""
-    print("\n[ Wait-Time Mini-Game] I'm thinking of a number between 1 and 100...")
-    target = random.randint(1, 100)
-    attempts = 0
+def mini_game():
+    items = ["🍎", "🍌", "🍇", "🍊", "🍓"]
+    target = random.choice(items)
+    print(f"\n[🎮 Quick Game] Catch the {target}! Type it as fast as you can when you see it.")
     
-    while not stop_game:
-        try:
-            # Using a short timeout-like check to see if we should stop
-            guess = input("\n(Game) Guess the number (or wait for AI): ")
-            if stop_game: break
-            
-            attempts += 1
-            guess = int(guess)
-            if guess < target: print("Higher! ↑")
-            elif guess > target: print("Lower! ↓")
-            else:
-                print(f" YOU GOT IT in {attempts} tries! Generating a new number...")
-                target = random.randint(1, 100)
-                attempts = 0
-        except ValueError:
-            if not stop_game: print("Enter a valid number!")
+    while not stop_event.is_set():
+        time.sleep(random.uniform(2, 5))
+        if stop_event.is_set(): break
+        
+        current = random.choice(items)
+        print(f"\nAI is thinking... Current item: {current}")
+        if current == target:
+            print(f"✨ QUICK! PRESS ENTER TO CATCH THE {target}! ✨")
 
-# --- MAIN EXECUTION ---
+# --- MAIN ---
 if __name__ == "__main__":
-    print("""
-     WELCOME TO THE AI INSIGHT GENERATOR 
-    -----------------------------------------
-    "The world's knowledge, refined by Gemini 3."
-    """)
+    print("\n" + "="*50)
+    print("🚀  GEMINI 3 MULTI-AGENT ORACLE  🚀")
+    print("="*50)
     
-    user_query = input(" What mystery shall we uncover today? (Topic): ")
+    user_query = input("\n🔮 What corner of the universe shall we explore? ")
     
-    print(f"\n Launching agents to research: '{user_query}'...")
-    print("This usually takes 30-60 seconds. In the meantime...")
-
-    # Start the game thread
-    game_thread = threading.Thread(target=play_mini_game, daemon=True)
+    print(f"\n📡 Agents deployed. Gathering intel on '{user_query}'...")
+    
+    # Start wait-time thread
+    game_thread = threading.Thread(target=mini_game, daemon=True)
     game_thread.start()
 
-    # Start the Crew
+    # Run Crew
     crew = Crew(agents=[researcher, writer], tasks=[research_task, write_task])
     result = crew.kickoff(inputs={'topic': user_query})
 
-    # Stop the game
-    stop_game = True
-    print("\n\n AI Agents have returned from their journey!")
-    print("-----------------------------------------")
+    # Wrap up
+    stop_event.set()
+    print("\n" + "✅" * 20)
+    print("\n📜 THE ORACLE'S REPORT:")
     print(result)
