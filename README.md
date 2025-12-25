@@ -1,2 +1,21 @@
-# ai-research-agent
-Multi-agent AI Research Engine powered by CrewAI and Google Gemini 1.5 Flash. Features an autonomous workflow where specialized AI agents (Researcher &amp; Writer) collaborate to search the live web via Serper.dev and synthesize technical reports. Optimized for 64-bit cloud environments with secure secret management. 
+# AI Research Crew: Multi-Agent Intelligence
+
+An autonomous research engine that leverages **CrewAI** and **Google Gemini 1.5 Flash** to perform deep-web analysis and professional report generation. This project demonstrates agentic orchestration, tool usage, and secure cloud deployment.
+
+---
+
+## The Architecture
+This project uses a "Sequential Process" where multiple AI agents collaborate to achieve a goal.
+
+```mermaid
+graph LR
+    User((User)) -->|Topic| Crew[CrewAI Orchestrator]
+    subgraph Agents
+        R[Researcher Agent]
+        W[Writer Agent]
+    end
+    Crew --> R
+    R -->|Web Search| S[Serper.dev API]
+    S -->|Raw Data| R
+    R -->|Structured Findings| W
+    W -->|Synthesized Report| User
