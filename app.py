@@ -8,13 +8,12 @@ os.environ["OPENAI_API_KEY"] = "NA"
 os.environ["SERPER_API_KEY"] = os.getenv("SERPER_API_KEY")
 
 # 2. Define Gemini 1.5 Flash
-# Changed to 'gemini-1.5-flash-latest' to resolve the 404 API error
+# Updated LLM Definition
 gemini_llm = LLM(
-    model="gemini/gemini-1.5-flash-latest",
+    model="gemini/gemini-1.5-flash",  
     api_key=os.getenv("GEMINI_API_KEY"),
     temperature=0.7
 )
-
 # 3. Setup Tools
 search_tool = SerperDevTool()
 
