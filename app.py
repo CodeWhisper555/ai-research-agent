@@ -34,7 +34,7 @@ def initialize_spectre_llm():
 st.title("💀 SPECTRE-A TERMINAL")
 st.write("---")
 st.subheader("SECURE CONNECTION: Spectral Tome of Knowledge")
-st.info("Operative AJAY: System online. Prepared for unconquerable recon.")
+st.info("Operative AJ: System online. Prepared for recon.")
 
 user_query = st.text_input("🕵️ Enter Your Topic For Deep Intel :", placeholder="Leave blank for core intel...")
 
