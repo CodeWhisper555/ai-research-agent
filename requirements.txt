@@ -1,4 +1,3 @@
-crewai
-crewai-tools
-langchain-google-genai
+crewai>=0.100.0
+crewai-tools>=1.7.0
 python-dotenv
