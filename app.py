@@ -47,7 +47,7 @@ if st.button("EXECUTE PROTOCOL"):
         llm = initialize_spectre_llm()
         search_tool = SerperDevTool(n_results=3)
 
-        st.write(f"Deploying Field Operative AJAY to investigate '{target_topic}'...")
+        st.write(f"Deploying Field Operative AJ to investigate '{target_topic}'...")
         
         # 1. Agents
         researcher = Agent(
