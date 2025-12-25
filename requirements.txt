@@ -1,3 +1,5 @@
-crewai>=0.100.0
-crewai-tools>=1.7.0
-python-dotenv
+crewai>=1.6.0
+crewai-tools>=0.14.0
+google-genai>=1.51.0
+litellm>=1.50.0
+python-dotenv>=1.0.1
