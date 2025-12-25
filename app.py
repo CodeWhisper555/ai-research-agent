@@ -25,18 +25,19 @@ if "SERPER_API_KEY" in st.secrets:
 # --- THE SPECTRAL TOME ENGINE ---
 @st.cache_resource
 def initialize_spectre_llm():
-    # UPDATED: Using Gemini 3 Flash Preview as identified in your AI Studio
+    # UPDATED: Migrated to Gemini 3 Flash Preview (Active as of Dec 2025)
+    # This bypasses the 404 error and uses the new "thinking" architecture.
     return LLM(
         model="gemini/gemini-3-flash-preview", 
-        temperature=1.0,  # Recommended for Gemini 3 to ensure creative reasoning
-        max_retries=5     # Increased retries to handle high-speed "burst" requests
+        temperature=1.0, # Mandatory for Gemini 3 series to enable reasoning
+        max_retries=3
     )
 
 # --- WEB UI ---
 st.title("💀 SPECTRE-A TERMINAL")
 st.write("---")
 st.subheader("SECURE CONNECTION: Spectral Tome of Knowledge")
-st.info("Operative AJAY: System online. Prepared for recon.")
+st.info("Operative AJ: System online. Prepared for recon.")
 
 user_query = st.text_input("🕵️ Enter Your Topic For Deep Intel:", placeholder="Leave blank for core intel...")
 
@@ -49,13 +50,13 @@ if st.button("EXECUTE PROTOCOL"):
 
     with st.status("📡 Accessing Spectral Tome...", expanded=True) as status:
         try:
-            st.write("Initializing Ultra-Stable Gemini 1.5 Architecture...")
+            st.write("Initializing Ultra-Stable Gemini 3 Architecture...") # Updated label
             llm = initialize_spectre_llm()
             search_tool = SerperDevTool()
 
             st.write(f"Deploying Field Operative A to investigate '{target_topic}'...")
             
-            # 1. Agents - Optimized with smaller backstories to save tokens
+            # 1. Agents - Optimized with smaller backstories and tactical iter limits
             researcher = Agent(
                 role='Spectre Field Operative',
                 goal=f'Extract 3 critical truths about {target_topic}',
@@ -64,7 +65,7 @@ if st.button("EXECUTE PROTOCOL"):
                 tools=[search_tool],
                 verbose=True,
                 allow_delegation=False,
-                max_iter=3 # Prevents infinite loops from eating quota
+                max_iter=2 # Reduced to 2: Gemini 3 is more precise and avoids drift
             )
 
             writer = Agent(
@@ -73,7 +74,8 @@ if st.button("EXECUTE PROTOCOL"):
                 backstory='The strategist. Turns raw data into intelligence.',
                 llm=llm,
                 verbose=True,
-                allow_delegation=False
+                allow_delegation=False,
+                max_iter=2 # Added tactical limit to prevent logic loops
             )
 
             # 2. Tasks
@@ -104,10 +106,9 @@ if st.button("EXECUTE PROTOCOL"):
         except Exception as e:
             status.update(label="🚨 MISSION FAILED", state="error")
             if "429" in str(e):
-                st.error("QUOTA EXHAUSTED: The Free Tier is currently full. Wait 60s and try again.")
-                
+                st.error("QUOTA EXHAUSTED: Gemini 3 Free Tier limit reached. Wait 60s for cool-down.")
             else:
                 st.error(f"Critical System Failure: {str(e)}")
 
 st.write("---")
-st.caption("v3.2 | Powered by Gemini 1.5 Flash | High-Stability Mode")
+st.caption("v3.5 | Powered by Gemini 3 Flash | High-Stability Mode")
