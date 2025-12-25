@@ -25,11 +25,11 @@ if "SERPER_API_KEY" in st.secrets:
 # --- THE SPECTRAL TOME ENGINE ---
 @st.cache_resource
 def initialize_spectre_llm():
-    # Switching to 1.5-Flash to bypass the '0 limit' quota bug in 2.0 Free Tier
+    # UPDATED: Using Gemini 3 Flash Preview as identified in your AI Studio
     return LLM(
-        model="gemini/gemini-1.5-flash", 
-        temperature=0.7,
-        max_retries=3 # Automatically waits and retries if rate limited
+        model="gemini/gemini-3-flash-preview", 
+        temperature=1.0,  # Recommended for Gemini 3 to ensure creative reasoning
+        max_retries=5     # Increased retries to handle high-speed "burst" requests
     )
 
 # --- WEB UI ---
