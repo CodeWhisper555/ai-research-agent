@@ -1,54 +1,48 @@
 import os
 from crewai import Agent, Task, Crew, Process, LLM
-from crewai_tools import SerperDevTool # NEW: Import the search tool
+from crewai_tools import SerperDevTool
 
-# 1. Configuration 
-# Note: Codespaces automatically makes GEMINI_API_KEY and SERPER_API_KEY 
-# available as environment variables if you saved them in Secrets.
+# 1. Configuration
 gemini_llm = LLM(
-    model="gemini/gemini-3-flash-preview",
+    model="gemini/gemini-1.5-flash", # Using stable flash model
     api_key=os.getenv("GEMINI_API_KEY"),
-    temperature=1.0, 
-    verbose=True
+    temperature=0.7
 )
 
-# NEW: Initialize the Serper search tool
-# It will automatically look for the SERPER_API_KEY in your environment variables
 search_tool = SerperDevTool()
 
-# 2. Define Agents
+# 2. Define Agents (Keep these general so they work for any topic)
 researcher = Agent(
-    role='Market Researcher',
-    goal='Identify emerging trends in the AI industry for 2026',
-    backstory='You are an expert analyst with a knack for spotting "the next big thing."',
+    role='Expert Researcher',
+    goal='Provide a deep-dive analysis on {topic}',
+    backstory='You are a world-class analyst known for uncovering hidden insights.',
     llm=gemini_llm,
-    tools=[search_tool],  # NEW: The researcher can now use Google/Serper
-    allow_delegation=False,
+    tools=[search_tool],
     verbose=True
 )
 
 writer = Agent(
-    role='Content Strategist',
-    goal='Write a compelling blog post about AI trends',
-    backstory='You transform complex data into engaging narratives for a tech audience.',
+    role='Technical Content Strategist',
+    goal='Create a high-impact summary about {topic}',
+    backstory='You turn raw research into professional, easy-to-read executive summaries.',
     llm=gemini_llm,
     verbose=True
 )
 
-# 3. Define Tasks
+# 3. Define Tasks with {placeholders}
 task1 = Task(
-    description='Analyze the top 3 AI trends based on recent late-2025 breakthroughs. Use your search tool to find actual events from the last 3 months.',
-    expected_output='A bulleted list of 3 trends with a brief explanation for each.',
+    description='Search for the latest breakthroughs and news related to {topic}.',
+    expected_output='A comprehensive list of the top 3-5 findings with supporting facts.',
     agent=researcher
 )
 
 task2 = Task(
-    description='Use the research to write a 3-paragraph blog post summary.',
-    expected_output='A markdown-formatted blog post.',
+    description='Using the research provided, write a 3-paragraph executive summary about {topic}.',
+    expected_output='A professional markdown-formatted summary.',
     agent=writer
 )
 
-# 4. Form the Crew
+# 4. Assemble the Crew
 crew = Crew(
     agents=[researcher, writer],
     tasks=[task1, task2],
@@ -56,11 +50,15 @@ crew = Crew(
     verbose=True
 )
 
-# 5. Kickoff
-print("### Starting the Crew Workflow with Web Search ###")
-result = crew.kickoff()
+# 5. Get User Input and Kickoff
+if __name__ == "__main__":
+    print("--- Welcome to the AI Research Crew ---")
+    user_topic = input("Enter the topic you want a summary for: ")
+    
+    # The 'inputs' dictionary fills in all the {topic} placeholders above
+    result = crew.kickoff(inputs={'topic': user_topic})
 
-print("\n\n########################")
-print("## FINAL OUTPUT ##")
-print("########################\n")
-print(result)
+    print("\n\n########################")
+    print(f"## FINAL SUMMARY FOR: {user_topic.upper()} ##")
+    print("########################\n")
+    print(result)
