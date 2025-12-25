@@ -1,64 +1,64 @@
 import os
-from crewai import Agent, Task, Crew, Process, LLM
+from crewai import Agent, Task, Crew, LLM
 from crewai_tools import SerperDevTool
 
-# 1. Configuration
-gemini_llm = LLM(
-    model="gemini/gemini-1.5-flash", # Using stable flash model
-    api_key=os.getenv("GEMINI_API_KEY"),
-    temperature=0.7
+# 1. Initialize Gemini 3 Flash
+gemini_3_flash = LLM(
+    model="gemini/gemini-3-flash-preview",
+    temperature=1.0,
+    api_key=os.environ.get("GEMINI_API_KEY"),
+    extra_body={"reasoning_effort": "high"}
 )
 
+# 2. Initialize Search Tool (Requires SERPER_API_KEY in .env)
 search_tool = SerperDevTool()
 
-# 2. Define Agents (Keep these general so they work for any topic)
+# 3. Define Agents
 researcher = Agent(
-    role='Expert Researcher',
-    goal='Provide a deep-dive analysis on {topic}',
-    backstory='You are a world-class analyst known for uncovering hidden insights.',
-    llm=gemini_llm,
-    tools=[search_tool],
+    role='Expert Web Researcher',
+    goal='Find the most relevant and up-to-date information about {topic}',
+    backstory='You are a master at navigating the web and extracting precise data.',
+    llm=gemini_3_flash,
+    tools=[search_tool], # Give the agent search powers
     verbose=True
 )
 
 writer = Agent(
-    role='Technical Content Strategist',
-    goal='Create a high-impact summary about {topic}',
-    backstory='You turn raw research into professional, easy-to-read executive summaries.',
-    llm=gemini_llm,
+    role='Content Specialist',
+    goal='Write a compelling report about {topic}',
+    backstory='You transform raw research into beautiful, readable summaries.',
+    llm=gemini_3_flash,
     verbose=True
 )
 
-# 3. Define Tasks with {placeholders}
-task1 = Task(
-    description='Search for the latest breakthroughs and news related to {topic}.',
-    expected_output='A comprehensive list of the top 3-5 findings with supporting facts.',
+# 4. Define Tasks with Placeholders
+research_task = Task(
+    description='Search the internet and find the 5 most important facts about {topic}.',
+    expected_output='A bulleted list of 5 key findings with sources.',
     agent=researcher
 )
 
-task2 = Task(
-    description='Using the research provided, write a 3-paragraph executive summary about {topic}.',
-    expected_output='A professional markdown-formatted summary.',
+write_task = Task(
+    description='Using the research provided, write a 2-paragraph summary about {topic}.',
+    expected_output='A clean, formatted 2-paragraph summary.',
     agent=writer
 )
 
-# 4. Assemble the Crew
+# 5. Assemble the Crew
 crew = Crew(
     agents=[researcher, writer],
-    tasks=[task1, task2],
-    process=Process.sequential,
+    tasks=[research_task, write_task],
     verbose=True
 )
 
-# 5. Get User Input and Kickoff
+# 6. Get User Input and Kickoff
 if __name__ == "__main__":
-    print("--- Welcome to the AI Research Crew ---")
-    user_topic = input("Enter the topic you want a summary for: ")
+    user_query = input("What topic would you like to research? ")
     
-    # The 'inputs' dictionary fills in all the {topic} placeholders above
-    result = crew.kickoff(inputs={'topic': user_topic})
-
+    # Pass the user input as a dictionary to the kickoff method
+    result = crew.kickoff(inputs={'topic': user_query})
+    
     print("\n\n########################")
-    print(f"## FINAL SUMMARY FOR: {user_topic.upper()} ##")
+    print("## FINAL REPORT")
     print("########################\n")
     print(result)
