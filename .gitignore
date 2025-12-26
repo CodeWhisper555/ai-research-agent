@@ -1,4 +1,29 @@
+# --- SPECTRE-A FIREWALL (DEC 2025) ---
+
+# Core Secrets - Never commit these
 .env
 .streamlit/secrets.toml
+
+# Python Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python Cache & Bytecode
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
+# OS Metadata (Invisible tracking files)
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Streamlit & CrewAI Logs
+*.log
+.streamlit/config.toml
